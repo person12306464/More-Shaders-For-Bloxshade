@@ -78,22 +78,27 @@ if (latestVersionInt > InstallerVersion)
             Directory.Delete(root + "NewVersion", true);
         }
 
+        if (File.Exists(root + "NewVersion.zip"))
+        {
+            File.Delete(root + "NewVersion.zip");
+        }
+
 
         // Download new version
-
-        System.IO.Directory.CreateDirectory(root + "NewVersion");
 
         using (var client = new HttpClient())
         {
             using (var s = client.GetStreamAsync(latestVersionDownload))
             {
-                using (var fs = new FileStream(root + "NewVersion\\More Shaders For Bloxshade.exe", FileMode.OpenOrCreate))
+                using (var fs = new FileStream(root + "NewVersion.zip", FileMode.OpenOrCreate))
                 {
                     s.Result.CopyTo(fs);
                 }
             }
         }
 
+        System.IO.Compression.ZipFile.ExtractToDirectory(root + "NewVersion.zip", root + "NewVersion");
+        File.Delete(root + "NewVersion.zip");
 
 
         // Make bat file to delete the old version and then move the new version into the main directory and launch it
