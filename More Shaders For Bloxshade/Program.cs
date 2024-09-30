@@ -18,8 +18,8 @@ if (isAdmin == false)
 }
 
 // Auto updater
-const int InstallerVersion = 200;
-const string InstallerVersionString = "2.0.0";
+const int InstallerVersion = 210;
+const string InstallerVersionString = "2.1.0";
 
 
 // Download gist to determine what the latest version is
@@ -37,10 +37,9 @@ using (var client = new HttpClient())
 // Make variables out of it
 string[] versionLines = File.ReadAllLines(root + "latestversion.txt");
 
-string latestVersionString = versionLines[0];
-int latestVersionInt = Int32.Parse(latestVersionString);
+int latestVersionInt = Int32.Parse(versionLines[0]);
 
-string latestVersionString2 = versionLines[1];
+string latestVersionString = versionLines[1];
 
 string latestVersionDownload = versionLines[2];
 
@@ -55,7 +54,7 @@ if (latestVersionInt > InstallerVersion)
     ConsoleKey response;
 
     Console.WriteLine("You have an outdated version!\n" +
-                      "You currently have {0} and the latest version is {1}!", InstallerVersionString, latestVersionString2);
+                      "You currently have {0} and the latest version is {1}!", InstallerVersionString, latestVersionString);
     do
     {
         Console.Write("Do you wish to update? [y/n] ");
@@ -150,7 +149,7 @@ Console.WriteLine("\nDownloading shaders...");
 
 string Ansel = "C:\\Program Files\\NVIDIA Corporation\\Ansel\\";
 
-string shaderDir = Ansel + "shaders\\msfb_shaders-b95ba528390a3915a2e66ccf959ffa5f8b4c0e95\\";
+string shaderDir = Ansel + "shaders\\msfb_shaders-8309018d0609f836a1ad720f758685c9b95e52f1\\";
 
 
 //Check if any of the files exists, if it does it gets deleted
@@ -447,6 +446,56 @@ if (File.Exists(Ansel + "GloomAO.fx"))
     File.Delete(Ansel + "GloomAO.fx");
 }
 
+if (File.Exists(Ansel + "Droste.fx"))
+{
+    File.Delete(Ansel + "Droste.fx");
+}
+
+if (File.Exists(Ansel + "LongExposure.fx"))
+{
+    File.Delete(Ansel + "LongExposure.fx");
+}
+
+if (File.Exists(Ansel + "RealLongExposure.fx"))
+{
+    File.Delete(Ansel + "RealLongExposure.fx");
+}
+
+if (File.Exists(Ansel + "FGFXFastCascadedSeparableBlur16X.fx"))
+{
+    File.Delete(Ansel + "FGFXFastCascadedSeparableBlur16X.fx");
+}
+
+if (File.Exists(Ansel + "PerfectPerspective.fx"))
+{
+    File.Delete(Ansel + "PerfectPerspective.fx");
+}
+
+if (File.Exists(Ansel + "Particles.fx"))
+{
+    File.Delete(Ansel + "Particles.fx");
+}
+
+if (File.Exists(Ansel + "AtmosphericDensity.fx"))
+{
+    File.Delete(Ansel + "AtmosphericDensity.fx");
+}
+
+if (File.Exists(Ansel + "MShaders.zip"))
+{
+    File.Delete(Ansel + "MShaders.zip");
+}
+
+if (Directory.Exists(Ansel + "MShaders"))
+{
+    Directory.Delete(Ansel + "MShaders", true);
+}
+
+if (Directory.Exists(Ansel + "Include"))
+{
+    Directory.Delete(Ansel + "Include", true);
+}
+
 
 
 
@@ -455,7 +504,7 @@ if (File.Exists(Ansel + "GloomAO.fx"))
 // Download shaders
 using (var client = new HttpClient())
 {
-    using (var s = client.GetStreamAsync("https://github.com/person12306464/msfb_shaders/archive/b95ba528390a3915a2e66ccf959ffa5f8b4c0e95.zip"))
+    using (var s = client.GetStreamAsync("https://github.com/person12306464/msfb_shaders/archive/8309018d0609f836a1ad720f758685c9b95e52f1.zip"))
     {
         using (var fs = new FileStream(Ansel + "shaders.zip", FileMode.OpenOrCreate))
         {
@@ -529,40 +578,16 @@ File.Move(shaderDir + "YASSGI\\YASSGI_bleu.png", Ansel + "YASSGI_bleu.png");
 File.Move(shaderDir + "YASSGI\\YASSGI_old_tracer.fx", Ansel + "YASSGI_old_tracer.fx");
 File.Move(shaderDir + "Zenteon\\ZN_GI.fx", Ansel + "ZN_GI.fx");
 File.Move(shaderDir + "Zenteon\\ZNbluenoise512.png", Ansel + "ZNbluenoise512.png");
+File.Move(shaderDir + "CobraFX\\Droste.fx", Ansel + "Droste.fx");
+File.Move(shaderDir + "CobraFX\\LongExposure.fx", Ansel + "LongExposure.fx");
+File.Move(shaderDir + "CobraFX\\RealLongExposure.fx", Ansel + "RealLongExposure.fx");
+File.Move(shaderDir + "FGFX\\FGFXFastCascadedSeparableBlur16X.fx", Ansel + "FGFXFastCascadedSeparableBlur16X.fx");
+File.Move(shaderDir + "Fubax\\PerfectPerspective.fx", Ansel + "PerfectPerspective.fx");
 
 Directory.Delete(Ansel + "shaders", true);
 
 // That took a while to do...
 
-
-// Now for GloomAO..
-
-Console.WriteLine("Downloading GloomAO...");
-using (var client = new HttpClient())
-{
-    using (var s = client.GetStreamAsync("https://github.com/BlueSkyDefender/AstrayFX/archive/910e3213a846b34dd65d94e84b61b61fca69dd6d.zip"))
-    {
-        using (var fs = new FileStream(Ansel + "GloomAO.zip", FileMode.OpenOrCreate))
-        {
-            s.Result.CopyTo(fs);
-        }
-    }
-}
-
-
-// Extract
-System.IO.Compression.ZipFile.ExtractToDirectory(Ansel + "GloomAO.zip", Ansel + "GloomAO");
-File.Delete(Ansel + "GloomAO.zip");
-
-// Move
-File.Move(Ansel + "GloomAO\\AstrayFX-910e3213a846b34dd65d94e84b61b61fca69dd6d\\Shaders\\GloomAO.fx", Ansel + "GloomAO.fx");
-
-// Delete
-Directory.Delete(Ansel + "GloomAO", true);
-
-
-
-// Start modifying GloomAO
 
 static void lineChanger(string newText, string fileName, int line_to_edit)
 {
@@ -570,6 +595,32 @@ static void lineChanger(string newText, string fileName, int line_to_edit)
     arrLine[line_to_edit - 1] = newText;
     File.WriteAllLines(fileName, arrLine);
 }
+
+static void lineAdder(string fileName, int line)
+{
+    var allLines = File.ReadAllLines(fileName).ToList();
+    allLines.Insert(line, "");
+    File.WriteAllLines(fileName, allLines.ToArray());
+}
+
+
+
+// Now for GloomAO..
+
+Console.WriteLine("Downloading GloomAO...");
+using (var client = new HttpClient())
+{
+    using (var s = client.GetStreamAsync("https://raw.githubusercontent.com/BlueSkyDefender/AstrayFX/910e3213a846b34dd65d94e84b61b61fca69dd6d/Shaders/GloomAO.fx"))
+    {
+        using (var fs = new FileStream(Ansel + "GloomAO.fx", FileMode.OpenOrCreate))
+        {
+            s.Result.CopyTo(fs);
+        }
+    }
+}
+
+
+// Start modifying GloomAO
 
 Console.WriteLine("Patching GloomAO...");
 
@@ -589,6 +640,101 @@ lineChanger("", Ansel + "GloomAO.fx", 1012);
 lineChanger("", Ansel + "GloomAO.fx", 1013);
 
 
+// Particles
+
+Console.WriteLine("Downloading Particles...");
+using (var client = new HttpClient())
+{
+    using (var s = client.GetStreamAsync("https://raw.githubusercontent.com/crosire/reshade-shaders/6b452c4a101ccb228c4986560a51c571473c517b/ShadersAndTextures/Particles.fx"))
+    {
+        using (var fs = new FileStream(Ansel + "Particles.fx", FileMode.OpenOrCreate))
+        {
+            s.Result.CopyTo(fs);
+        }
+    }
+}
+
+
+Console.WriteLine("Patching Particles...");
+
+lineAdder(Ansel + "Particles.fx", 180);
+lineAdder(Ansel + "Particles.fx", 180);
+lineAdder(Ansel + "Particles.fx", 180);
+lineAdder(Ansel + "Particles.fx", 180);
+lineAdder(Ansel + "Particles.fx", 180);
+lineAdder(Ansel + "Particles.fx", 180);
+
+
+lineChanger("float getBUFFER_HEIGHT()", Ansel + "Particles.fx", 182);
+lineChanger("{", Ansel + "Particles.fx", 183);
+lineChanger("	return BUFFER_HEIGHT;", Ansel + "Particles.fx", 184);
+lineChanger("}", Ansel + "Particles.fx", 185);
+
+lineChanger("	#if (getBUFFER_HEIGHT() <= 720)", Ansel + "Particles.fx", 189);
+lineChanger("	#elif (getBUFFER_HEIGHT() <= 1080)", Ansel + "Particles.fx", 191);
+lineChanger("	#elif (getBUFFER_HEIGHT() <= 1440)", Ansel + "Particles.fx", 193);
+lineChanger("	#elif (getBUFFER_HEIGHT() <= 2160)", Ansel + "Particles.fx", 195);
+
+
+
+// Atmospheric Density
+
+Console.WriteLine("Downloading AtmosphericDensity...");
+using (var client = new HttpClient())
+{
+    using (var s = client.GetStreamAsync("https://github.com/TreyM/MShaders-1/archive/d38b1af92d047b96819c898400919798e265c1cd.zip"))
+    {
+        using (var fs = new FileStream(Ansel + "MShaders.zip", FileMode.OpenOrCreate))
+        {
+            s.Result.CopyTo(fs);
+        }
+    }
+}
+
+System.IO.Compression.ZipFile.ExtractToDirectory(Ansel + "MShaders.zip", Ansel + "MShaders");
+File.Delete(Ansel + "MShaders.zip");
+File.Move(Ansel + "MShaders\\MShaders-1-d38b1af92d047b96819c898400919798e265c1cd\\Shaders\\MShaders\\AtmosphericDensity.fx", Ansel + "AtmosphericDensity.fx");
+Directory.Move(Ansel + "MShaders\\MShaders-1-d38b1af92d047b96819c898400919798e265c1cd\\Shaders\\MShaders\\Include", Ansel + "Include");
+Directory.Delete(Ansel + "MShaders", true);
+
+
+
+Console.WriteLine("Patching AtmosphericDensity...");
+
+
+lineChanger("    #define ENABLE_MISC_CONTROLS 1", Ansel + "AtmosphericDensity.fx", 53);
+lineChanger("    float  depth, sky;", Ansel + "AtmosphericDensity.fx", 486);
+lineChanger("", Ansel + "AtmosphericDensity.fx", 493);
+lineChanger("", Ansel + "AtmosphericDensity.fx", 526);
+lineChanger("", Ansel + "AtmosphericDensity.fx", 527);
+lineChanger("", Ansel + "AtmosphericDensity.fx", 528);
+lineChanger("", Ansel + "AtmosphericDensity.fx", 546);
+
+lineChanger("UI_COMBO (AUTO_COLOR, \"Fog Color Mode\", \"\", 0, 1,", Ansel + "AtmosphericDensity.fx", 66);
+
+
+
+// MXAO IL
+
+Console.WriteLine("Downloading qUINT_mxao_il...");
+using (var client = new HttpClient())
+{
+    using (var s = client.GetStreamAsync("https://raw.githubusercontent.com/martymcmodding/qUINT/98fed77b26669202027f575a6d8f590426c21ebd/Shaders/qUINT_mxao.fx"))
+    {
+        using (var fs = new FileStream(Ansel + "qUINT_mxao_il", FileMode.OpenOrCreate))
+        {
+            s.Result.CopyTo(fs);
+        }
+    }
+}
+
+lineChanger(" #define MXAO_ENABLE_IL			1	//[0 or 1]	    Enables Indirect Lighting calculation. Will cause a major fps hit.", Ansel + "AtmosphericDensity.fx", 31);
+
+
+
+
+
+
 
 // This is a checkmark, it looks kinda broken in the code but when running the program it looks good
 Console.WriteLine("\n        _ \n" +
@@ -605,7 +751,7 @@ Console.WriteLine("Successfully installed the following shaders:\n\n" +
                   "dh_rtgi.fx (By AlucardDH)\n" +
                   "Limbo_Mod.fx (By BlueSkyDefender, License: https://creativecommons.org/licenses/by/2.0/)\n" +
                   "SnowScape.fx (By BlueSkyDefender, License: https://creativecommons.org/licenses/by/2.0/)\n" +
-                  "Deband (By haasn, modified and optimized for ReShade by JPulowski.)\n" +
+                  "Deband.fx (By haasn, modified and optimized for ReShade by JPulowski.)\n" +
                   "GILT.fx (By Extravi) (GILT 1-5 are test versions)\n" +
                   "Glamayre_Fast_Effects.fx (By Robert Jessop)\n" +
                   "Bumpmapping.fx (By guestrr, patched by Person123)\n" +
@@ -632,25 +778,37 @@ Console.WriteLine("Successfully installed the following shaders:\n\n" +
                   "TSMAA.fx (By lordbean)\n" +
                   "TSMAA2.fx (By lordbean)\n" +
                   "XHQAA.fx (By lordbean)\n" +
-                  "MC_SSAO (By Constantine 'MadCake' Rudenko, License: https://creativecommons.org/licenses/by/4.0/)\n" +
-                  "MC_Tonemap (By Constantine 'MadCake' Rudenko https://creativecommons.org/licenses/by/4.0/) (Has been modified)\n" +
-                  "MC_TonemapHDR (By Constantine 'MadCake' Rudenko https://creativecommons.org/licenses/by/4.0/) (Has been modified)\n" +
+                  "MC_SSAO.fx (By Constantine 'MadCake' Rudenko, License: https://creativecommons.org/licenses/by/4.0/)\n" +
+                  "MC_Tonemap.fx (By Constantine 'MadCake' Rudenko, License: https://creativecommons.org/licenses/by/4.0/) (Has been modified)\n" +
+                  "MC_TonemapHDR.fx (By Constantine 'MadCake' Rudenko, License: https://creativecommons.org/licenses/by/4.0/) (Has been modified)\n" +
                   "Reinhard.fx (Original code by Marty McFly, Amateur port by Insomnia)\n" +
                   "5XBR_NoBlend.fx (By Hyllian, Ported by spiderh @2018)\n" +
                   "YASSGI_old_tracer.fx (By Pentalimbed)\n" +
                   "ZN_GI.fx (By Zenteon, patched by Sync)\n" +
-                  "GloomAO.fx (By BlueSkyDefender, License: https://creativecommons.org/licenses/by-nd/4.0, patched by Sync)\n\n" +
+                  "GloomAO.fx (By BlueSkyDefender, License: https://creativecommons.org/licenses/by-nd/4.0, patched by Sync)\n" +
+                  "Droste.fx (By SirCobra)\n" +
+                  "LongExposure.fx (By SirCobra)" +
+                  "FGFXFastCascadedSeparableBlur16X.fx (By Alex Tuduran, patched by Person123)\n" +
+                  "PerfectPerspective.fx (By Fubaxiusz, License: http://creativecommons.org/licenses/by-sa/3.0/, patched by Person123) (Has been modified)\n" +
+                  "Particles.fx (By BlueSkyDefender, License: https://creativecommons.org/licenses/by-nd/4.0/, patched by Person123)\n" +
+                  "qUINT_mxao_il.fx (By Marty McFly, MXAO with IL enabled.)\n" +
+                  "\n" +
                   "Highlights:\n\n" +
                   "NGLighting_specular.fx (By NiceGuy, patched by Extravi, modified by Person123)\n" +
                   "Ray traced reflections, for free.\n\n" +
                   "FGFXLargeScalePerceptualObscuranceIrradiance.fx (By Alex Tuduran, patched by Person123)\n" +
-                  "Adds Large scale perceptual Obscurance irradiance, ok i'm not sure what this does exactly but it looks cool right?\n\n" +
+                  "Adds large scale perceptual obscurance irradiance, ok I'm not exactly sure what this does but it's cool right?\n\n" +
                   "Volumetric Fog V2.0.fx (By NiceGuy, patched by Person123)\n" +
-                  "Adds some kind of fake volumetric fog by blurring the background and blending it and doing a bunch of other things, it looks really cool actually\n\n" +
-                  "DiffuseGlow (By Ioxa)\n" +
-                  "I can't really explain this one, just try it yourself, it's cool\n\n");
+                  "Adds some kind of fake volumetric fog by blurring the background and blending it and doing a bunch of other things, it looks really cool actually.\n\n" +
+                  "AtmosphericDensity.fx (By TreyM, patched by Sync)\n" +
+                  "Good fog shader, only \"Exact Fog Color\" works correctly in Ansel, very broken in general but pair it with Volumetric Fog V2 and you got some good fog.\n" +
+                  "If this shader worked fully correctly it would've been a replacment for Volumetric Fog V2 but it's more of a replacment for AdaptiveFog in Ansel.\n\n" +
+                  "RealLongExposure.fx (By SirCobra)\n" +
+                  "Long Exposure shader, toggle the UI option on and it will blend the frames together for the defined amount of time.\n\n" +
+                  "DiffuseGlow.fx (By Ioxa)\n" +
+                  "I can't really explain this one, just try it yourself, it's cool.\n\n");
 
-// This is a checkmark, it looks kinda broken in the code but when running the program it looks good
+
 Console.WriteLine("Successfully installed all shaders above. ^^^\n\n" +
                   "        _ \n" +
                   "       / /\n" +
