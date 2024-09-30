@@ -7,7 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Version>2.1.1.0</Version>
+    <Version>2.1.2.0</Version>
     <Company>None</Company>
     <Description>More Shaders for Bloxshade installs additional shaders to Ansel for presets to use.</Description>
     <AssemblyTitle>More Shaders for Bloxshade installs additional shaders to Ansel for presets to use.</AssemblyTitle>

@@ -18,8 +18,8 @@ if (isAdmin == false)
 }
 
 // Auto updater
-const int InstallerVersion = 211;
-const string InstallerVersionString = "2.1.1";
+const int InstallerVersion = 212;
+const string InstallerVersionString = "2.1.2";
 
 
 // Download gist to determine what the latest version is
