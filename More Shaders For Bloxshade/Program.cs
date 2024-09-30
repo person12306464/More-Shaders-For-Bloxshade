@@ -787,7 +787,7 @@ Console.WriteLine("Successfully installed the following shaders:\n\n" +
                   "ZN_GI.fx (By Zenteon, patched by Sync)\n" +
                   "GloomAO.fx (By BlueSkyDefender, License: https://creativecommons.org/licenses/by-nd/4.0, patched by Sync)\n" +
                   "Droste.fx (By SirCobra)\n" +
-                  "LongExposure.fx (By SirCobra)" +
+                  "LongExposure.fx (By SirCobra)\n" +
                   "FGFXFastCascadedSeparableBlur16X.fx (By Alex Tuduran, patched by Person123)\n" +
                   "PerfectPerspective.fx (By Fubaxiusz, License: http://creativecommons.org/licenses/by-sa/3.0/, patched by Person123) (Has been modified)\n" +
                   "Particles.fx (By BlueSkyDefender, License: https://creativecommons.org/licenses/by-nd/4.0/, patched by Person123)\n" +
