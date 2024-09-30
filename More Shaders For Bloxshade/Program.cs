@@ -721,7 +721,7 @@ using (var client = new HttpClient())
 {
     using (var s = client.GetStreamAsync("https://raw.githubusercontent.com/martymcmodding/qUINT/98fed77b26669202027f575a6d8f590426c21ebd/Shaders/qUINT_mxao.fx"))
     {
-        using (var fs = new FileStream(Ansel + "qUINT_mxao_il", FileMode.OpenOrCreate))
+        using (var fs = new FileStream(Ansel + "qUINT_mxao_il.fx", FileMode.OpenOrCreate))
         {
             s.Result.CopyTo(fs);
         }
