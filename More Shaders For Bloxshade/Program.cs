@@ -18,8 +18,8 @@ if (isAdmin == false)
 }
 
 // Auto updater
-const int InstallerVersion = 212;
-const string InstallerVersionString = "2.1.2";
+const int InstallerVersion = 213;
+const string InstallerVersionString = "2.1.3";
 
 
 // Download gist to determine what the latest version is
@@ -728,7 +728,7 @@ using (var client = new HttpClient())
     }
 }
 
-lineChanger(" #define MXAO_ENABLE_IL			1	//[0 or 1]	    Enables Indirect Lighting calculation. Will cause a major fps hit.", Ansel + "AtmosphericDensity.fx", 31);
+lineChanger(" #define MXAO_ENABLE_IL			1	//[0 or 1]	    Enables Indirect Lighting calculation. Will cause a major fps hit.", Ansel + "qUINT_mxao_il.fx", 31);
 
 
 
