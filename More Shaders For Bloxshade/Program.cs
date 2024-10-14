@@ -1,6 +1,5 @@
 ﻿using System.Security.Principal;
 
-string root = AppDomain.CurrentDomain.BaseDirectory;
 
 // Check if the program is running as admin
 
@@ -17,22 +16,133 @@ if (isAdmin == false)
     Environment.Exit(1);
 }
 
-// Auto updater
-const int InstallerVersion = 213;
-const string InstallerVersionString = "2.1.3";
 
 
-// Download gist to determine what the latest version is
-using (var client = new HttpClient())
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                             Common                                             //
+//                                                                                                //
+
+
+string root = AppDomain.CurrentDomain.BaseDirectory; // Gets the directory the executable is in
+
+// Console.WriteLine(); // Print
+// Console.ReadKey(); // Basically like a pause thing until you press a key
+// Console.Readline(); // Same as the other one but you enter a line instead and the program continues when you press enter
+
+
+// File.Move("path\\file.txt", "newpath\file.txt");
+// File.Delete("path\\file.txt");
+
+// Directory.CreateDirectory("path\\dirname");
+// Directory.Delete("path\\dirname", true);  // The "true" at the end is if child directories and files should be deleted too
+
+// Environment.Exit(0); // Closes the program with the specified exit code. 0 is normal and anything else is if something went wrong
+
+
+
+// Extract zip
+static void Extract(string inputZip, string outputDir)
 {
-    using (var s = client.GetStreamAsync("https://gist.githubusercontent.com/person12306464/43bfd48dcae5e6365a726985241099a2/raw/latestversion.txt"))
+    System.IO.Compression.ZipFile.ExtractToDirectory(inputZip, outputDir);
+}
+
+
+// Change line
+static void ChangeLine(string newText, string fileName, int line_to_edit)
+{
+    string[] arrLine = File.ReadAllLines(fileName);
+    arrLine[line_to_edit - 1] = newText;
+    File.WriteAllLines(fileName, arrLine);
+}
+
+
+// Add line
+static void AddLine(string fileName, int line)
+{
+    var allLines = File.ReadAllLines(fileName).ToList();
+    allLines.Insert(line, "");
+    File.WriteAllLines(fileName, allLines.ToArray());
+}
+
+
+// If file exists delete it
+static void IfFileExistsDelete(string file)
+{
+    if (File.Exists(file))
     {
-        using (var fs = new FileStream(root + "latestversion.txt", FileMode.OpenOrCreate))
+        File.Delete(file);
+    }
+}
+
+
+// If directory exists delete it
+static void IfDirectoryExistsDelete(string dir)
+{
+    if (Directory.Exists(dir))
+    {
+        Directory.Delete(dir, true);
+    }
+}
+
+
+// Download file
+static void Download(string url, string output)
+{
+    using (var client = new HttpClient())
+    {
+        using (var s = client.GetStreamAsync(url))
         {
-            s.Result.CopyTo(fs);
+            using (var fs = new FileStream(output, FileMode.OpenOrCreate))
+            {
+                s.Result.CopyTo(fs);
+            }
         }
     }
 }
+
+
+
+// Yes or no choice prompt
+static bool Choice(string text)
+{
+    bool confirmed = false;
+
+    ConsoleKey response;
+
+    do
+    {
+        Console.Write(text + " [y/n] ");
+        response = Console.ReadKey(false).Key;   // true is intercept key (dont show), false is show
+        if (response != ConsoleKey.Enter)
+            Console.WriteLine();
+
+    } while (response != ConsoleKey.Y && response != ConsoleKey.N);
+
+    confirmed = response == ConsoleKey.Y;
+
+    return confirmed;
+}
+
+
+
+//                                                                                                //
+//                                                                                                //
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+// Auto updater
+const int InstallerVersion = 2200;
+const string InstallerVersionString = "2.2.0.0";
+
+
+// Download gist to determine what the latest version is
+
+Download("https://gist.githubusercontent.com/person12306464/47ba19202252b0b11c9b4ac47846ab7c/raw/latestversion.txt", root + "latestversion.txt");
+
 
 // Make variables out of it
 string[] versionLines = File.ReadAllLines(root + "latestversion.txt");
@@ -49,54 +159,34 @@ File.Delete(root + "latestversion.txt");
 // Main auto update thing
 if (latestVersionInt > InstallerVersion)
 {
-    bool confirmed = false;
-
-    ConsoleKey response;
 
     Console.WriteLine("You have an outdated version!\n" +
                       "You currently have {0} and the latest version is {1}!", InstallerVersionString, latestVersionString);
-    do
-    {
-        Console.Write("Do you wish to update? [y/n] ");
-        response = Console.ReadKey(false).Key;   // true is intercept key (dont show), false is show
-        if (response != ConsoleKey.Enter)
-            Console.WriteLine();
 
-    } while (response != ConsoleKey.Y && response != ConsoleKey.N);
 
-    confirmed = response == ConsoleKey.Y;
+    bool result = Choice("Do you wish to update?");
 
-    if (confirmed == true)
+
+
+    if (result == true)
     {
         Console.WriteLine("Updating to the latest version...");
 
 
         // Check if the NewVersion directory exists already (It shouldn't but could do if there was an error before deleting it)
-        if (Directory.Exists(root + "NewVersion"))
-        {
-            Directory.Delete(root + "NewVersion", true);
-        }
 
-        if (File.Exists(root + "NewVersion.zip"))
-        {
-            File.Delete(root + "NewVersion.zip");
-        }
+        IfDirectoryExistsDelete(root + "NewVersion");
+
+        IfFileExistsDelete(root + "NewVersion.zip");
 
 
         // Download new version
 
-        using (var client = new HttpClient())
-        {
-            using (var s = client.GetStreamAsync(latestVersionDownload))
-            {
-                using (var fs = new FileStream(root + "NewVersion.zip", FileMode.OpenOrCreate))
-                {
-                    s.Result.CopyTo(fs);
-                }
-            }
-        }
+        Download(latestVersionDownload, root + "NewVersion.zip");
 
-        System.IO.Compression.ZipFile.ExtractToDirectory(root + "NewVersion.zip", root + "NewVersion");
+
+        Extract(root + "NewVersion.zip", root + "NewVersion");
+
         File.Delete(root + "NewVersion.zip");
 
 
@@ -149,375 +239,101 @@ Console.WriteLine("\nDownloading shaders...");
 
 string Ansel = "C:\\Program Files\\NVIDIA Corporation\\Ansel\\";
 
-string shaderDir = Ansel + "shaders\\msfb_shaders-8309018d0609f836a1ad720f758685c9b95e52f1\\";
+string shaderDir = Ansel + "shaders\\msfb_shaders-fc9168ef110b16a8f187a5bf94d2229fda243ad9\\";
 
 
 //Check if any of the files exists, if it does it gets deleted
 
 // I know this is alot of manual work i don't care to make something dynamically do this
 // Like it works, alright
-if (File.Exists(Ansel + "shaders.zip"))
-{
-    File.Delete(Ansel + "shaders.zip");
-}
 
-if (Directory.Exists(Ansel + "shaders"))
-{
-    Directory.Delete(Ansel + "shaders", true);
-}
-
-if (File.Exists(Ansel + "AgX.fx"))
-{
-    File.Delete(Ansel + "AgX.fx");
-}
-
-if (File.Exists(Ansel + "AgX-default_contrast.lut.png"))
-{
-    File.Delete(Ansel + "AgX-default_contrast.lut.png");
-}
-
-if (File.Exists(Ansel + "dh_rtgi.fx"))
-{
-    File.Delete(Ansel + "dh_rtgi.fx");
-}
-
-if (File.Exists(Ansel + "Limbo_Mod.fx"))
-{
-    File.Delete(Ansel + "Limbo_Mod.fx");
-}
-
-if (File.Exists(Ansel + "SnowScape.fx"))
-{
-    File.Delete(Ansel + "SnowScape.fx");
-}
-
-if (File.Exists(Ansel + "Deband.fx"))
-{
-    File.Delete(Ansel + "Deband.fx");
-}
-
-if (File.Exists(Ansel + "DiffuseGlow.fx"))
-{
-    File.Delete(Ansel + "DiffuseGlow.fx");
-}
-
-if (File.Exists(Ansel + "FGFXLargeScalePerceptualObscuranceIrradiance.fx"))
-{
-    File.Delete(Ansel + "FGFXLargeScalePerceptualObscuranceIrradiance.fx");
-}
-
-if (File.Exists(Ansel + "GILT.fx"))
-{
-    File.Delete(Ansel + "GILT.fx");
-}
-
-if (File.Exists(Ansel + "GILT1.fx"))
-{
-    File.Delete(Ansel + "GILT1.fx");
-}
-
-if (File.Exists(Ansel + "GILT2.fx"))
-{
-    File.Delete(Ansel + "GILT2.fx");
-}
-
-if (File.Exists(Ansel + "GILT3.fx"))
-{
-    File.Delete(Ansel + "GILT3.fx");
-}
-
-if (File.Exists(Ansel + "GILT4.fx"))
-{
-    File.Delete(Ansel + "GILT4.fx");
-}
-
-if (File.Exists(Ansel + "GILT5.fx"))
-{
-    File.Delete(Ansel + "GILT5.fx");
-}
-
-if (File.Exists(Ansel + "GILT4_NoNoise.fx"))
-{
-    File.Delete(Ansel + "GILT4_NoNoise.fx");
-}
-
-if (File.Exists(Ansel + "Glamayre_Fast_Effects.fx"))
-{
-    File.Delete(Ansel + "Glamayre_Fast_Effects.fx");
-}
-
-if (File.Exists(Ansel + "Bumpmapping.fx"))
-{
-    File.Delete(Ansel + "Bumpmapping.fx");
-}
-
-if (File.Exists(Ansel + "Deblur.fx"))
-{
-    File.Delete(Ansel + "Deblur.fx");
-}
-
-if (File.Exists(Ansel + "DeblurUpscaler.fx"))
-{
-    File.Delete(Ansel + "DeblurUpscaler.fx");
-}
-
-if (File.Exists(Ansel + "HBAO.fx"))
-{
-    File.Delete(Ansel + "HBAO.fx");
-}
-
-if (File.Exists(Ansel + "Low_sats_check.fx"))
-{
-    File.Delete(Ansel + "Low_sats_check.fx");
-}
-
-if (File.Exists(Ansel + "Low_saturation_check.fx"))
-{
-    File.Delete(Ansel + "Low_saturation_check.fx");
-}
-
-if (File.Exists(Ansel + "White Point 2D.fx"))
-{
-    File.Delete(Ansel + "White Point 2D.fx");
-}
-
-if (File.Exists(Ansel + "White Point RGB 2D.fx"))
-{
-    File.Delete(Ansel + "White Point RGB 2D.fx");
-}
-
-if (File.Exists(Ansel + "White Point_No_Debug.fx"))
-{
-    File.Delete(Ansel + "White Point_No_Debug.fx");
-}
-
-if (File.Exists(Ansel + "xy Primaries 2D.fx"))
-{
-    File.Delete(Ansel + "xy Primaries 2D.fx");
-}
-
-if (File.Exists(Ansel + "Y_gamma.fx"))
-{
-    File.Delete(Ansel + "Y_gamma.fx");
-}
-
-if (File.Exists(Ansel + "Y_Invert.fx"))
-{
-    File.Delete(Ansel + "Y_Invert.fx");
-}
-
-if (File.Exists(Ansel + "256color.fx"))
-{
-    File.Delete(Ansel + "256color.fx");
-}
-
-if (File.Exists(Ansel + "ASSMAA.fx"))
-{
-    File.Delete(Ansel + "ASSMAA.fx");
-}
-
-if (File.Exists(Ansel + "FSMAA.fx"))
-{
-    File.Delete(Ansel + "FSMAA.fx");
-}
-
-if (File.Exists(Ansel + "HQAA.fx"))
-{
-    File.Delete(Ansel + "HQAA.fx");
-}
-
-if (File.Exists(Ansel + "HQAALite.fx"))
-{
-    File.Delete(Ansel + "HQAALite.fx");
-}
-
-if (File.Exists(Ansel + "ImageSoften.fx"))
-{
-    File.Delete(Ansel + "ImageSoften.fx");
-}
-
-if (File.Exists(Ansel + "QXAA.fx"))
-{
-    File.Delete(Ansel + "QXAA.fx");
-}
-
-if (File.Exists(Ansel + "SmartBrightnessBooster.fx"))
-{
-    File.Delete(Ansel + "SmartBrightnessBooster.fx");
-}
-
-if (File.Exists(Ansel + "STAA.fx"))
-{
-    File.Delete(Ansel + "STAA.fx");
-}
-
-if (File.Exists(Ansel + "TSMAA.fx"))
-{
-    File.Delete(Ansel + "TSMAA.fx");
-}
-
-if (File.Exists(Ansel + "TSMAA2.fx"))
-{
-    File.Delete(Ansel + "TSMAA2.fx");
-}
-
-if (File.Exists(Ansel + "XHQAA.fx"))
-{
-    File.Delete(Ansel + "XHQAA.fx");
-}
-
-if (File.Exists(Ansel + "MC_SSAO.fx"))
-{
-    File.Delete(Ansel + "MC_SSAO.fx");
-}
-
-if (File.Exists(Ansel + "MC_Tonemap.fx"))
-{
-    File.Delete(Ansel + "MC_Tonemap.fx");
-}
-
-if (File.Exists(Ansel + "MC_TonemapHDR.fx"))
-{
-    File.Delete(Ansel + "MC_TonemapHDR.fx");
-}
-
-if (File.Exists(Ansel + "NGLighting_specular.fx"))
-{
-    File.Delete(Ansel + "NGLighting_specular.fx");
-}
-
-if (File.Exists(Ansel + "NGLighting-Configs_specular.fxh"))
-{
-    File.Delete(Ansel + "NGLighting-Configs_specular.fxh");
-}
-
-if (File.Exists(Ansel + "NGLighting-Shader_specular.fxh"))
-{
-    File.Delete(Ansel + "NGLighting-Shader_specular.fxh");
-}
-
-if (File.Exists(Ansel + "NGLightingUI_specular.fxh"))
-{
-    File.Delete(Ansel + "NGLightingUI_specular.fxh");
-}
-
-if (File.Exists(Ansel + "Volumetric Fog V2.0.fx"))
-{
-    File.Delete(Ansel + "Volumetric Fog V2.0.fx");
-}
-
-if (File.Exists(Ansel + "Reinhard.fx"))
-{
-    File.Delete(Ansel + "Reinhard.fx");
-}
-
-if (File.Exists(Ansel + "5XBR_NoBlend.fx"))
-{
-    File.Delete(Ansel + "5XBR_NoBlend.fx");
-}
-
-if (File.Exists(Ansel + "ShaderFastMathLib.h"))
-{
-    File.Delete(Ansel + "ShaderFastMathLib.h");
-}
-
-if (File.Exists(Ansel + "YASSGI_bleu.png"))
-{
-    File.Delete(Ansel + "YASSGI_bleu.png");
-}
-
-if (File.Exists(Ansel + "YASSGI_old_tracer.fx"))
-{
-    File.Delete(Ansel + "YASSGI_old_tracer.fx");
-}
-
-if (File.Exists(Ansel + "ZN_GI.fx"))
-{
-    File.Delete(Ansel + "ZN_GI.fx");
-}
-
-if (File.Exists(Ansel + "ZNbluenoise512.png"))
-{
-    File.Delete(Ansel + "ZNbluenoise512.png");
-}
-
-if (File.Exists(Ansel + "GloomAO.fx"))
-{
-    File.Delete(Ansel + "GloomAO.fx");
-}
-
-if (File.Exists(Ansel + "Droste.fx"))
-{
-    File.Delete(Ansel + "Droste.fx");
-}
-
-if (File.Exists(Ansel + "LongExposure.fx"))
-{
-    File.Delete(Ansel + "LongExposure.fx");
-}
-
-if (File.Exists(Ansel + "RealLongExposure.fx"))
-{
-    File.Delete(Ansel + "RealLongExposure.fx");
-}
-
-if (File.Exists(Ansel + "FGFXFastCascadedSeparableBlur16X.fx"))
-{
-    File.Delete(Ansel + "FGFXFastCascadedSeparableBlur16X.fx");
-}
-
-if (File.Exists(Ansel + "PerfectPerspective.fx"))
-{
-    File.Delete(Ansel + "PerfectPerspective.fx");
-}
-
-if (File.Exists(Ansel + "Particles.fx"))
-{
-    File.Delete(Ansel + "Particles.fx");
-}
-
-if (File.Exists(Ansel + "AtmosphericDensity.fx"))
-{
-    File.Delete(Ansel + "AtmosphericDensity.fx");
-}
-
-if (File.Exists(Ansel + "MShaders.zip"))
-{
-    File.Delete(Ansel + "MShaders.zip");
-}
-
-if (Directory.Exists(Ansel + "MShaders"))
-{
-    Directory.Delete(Ansel + "MShaders", true);
-}
-
-if (Directory.Exists(Ansel + "Include"))
-{
-    Directory.Delete(Ansel + "Include", true);
-}
-
-
+IfFileExistsDelete(Ansel + "shaders.zip");
+IfDirectoryExistsDelete(Ansel + "shaders");
+IfFileExistsDelete(Ansel + "AgX.fx");
+IfFileExistsDelete(Ansel + "AgX-default_contrast.lut.png");
+IfFileExistsDelete(Ansel + "dh_rtgi.fx");
+IfFileExistsDelete(Ansel + "Limbo_Mod.fx");
+IfFileExistsDelete(Ansel + "SnowScape.fx");
+IfFileExistsDelete(Ansel + "Deband.fx");
+IfFileExistsDelete(Ansel + "DiffuseGlow.fx");
+IfFileExistsDelete(Ansel + "FGFXLargeScalePerceptualObscuranceIrradiance.fx");
+IfFileExistsDelete(Ansel + "GILT.fx");
+IfFileExistsDelete(Ansel + "GILT1.fx");
+IfFileExistsDelete(Ansel + "GILT2.fx");
+IfFileExistsDelete(Ansel + "GILT3.fx");
+IfFileExistsDelete(Ansel + "GILT4.fx");
+IfFileExistsDelete(Ansel + "GILT5.fx");
+IfFileExistsDelete(Ansel + "GILT4_NoNoise.fx");
+IfFileExistsDelete(Ansel + "Glamayre_Fast_Effects.fx");
+IfFileExistsDelete(Ansel + "Bumpmapping.fx");
+IfFileExistsDelete(Ansel + "Deblur.fx");
+IfFileExistsDelete(Ansel + "DeblurUpscaler.fx");
+IfFileExistsDelete(Ansel + "HBAO.fx");
+IfFileExistsDelete(Ansel + "Low_sats_check.fx");
+IfFileExistsDelete(Ansel + "Low_saturation_check.fx");
+IfFileExistsDelete(Ansel + "White Point 2D.fx");
+IfFileExistsDelete(Ansel + "White Point RGB 2D.fx");
+IfFileExistsDelete(Ansel + "White Point_No_Debug.fx");
+IfFileExistsDelete(Ansel + "xy Primaries 2D.fx");
+IfFileExistsDelete(Ansel + "Y_gamma.fx");
+IfFileExistsDelete(Ansel + "Y_Invert.fx");
+IfFileExistsDelete(Ansel + "256color.fx");
+IfFileExistsDelete(Ansel + "ASSMAA.fx");
+IfFileExistsDelete(Ansel + "FSMAA.fx");
+IfFileExistsDelete(Ansel + "HQAA.fx");
+IfFileExistsDelete(Ansel + "HQAALite.fx");
+IfFileExistsDelete(Ansel + "ImageSoften.fx");
+IfFileExistsDelete(Ansel + "QXAA.fx");
+IfFileExistsDelete(Ansel + "SmartBrightnessBooster.fx");
+IfFileExistsDelete(Ansel + "STAA.fx");
+IfFileExistsDelete(Ansel + "TSMAA.fx");
+IfFileExistsDelete(Ansel + "TSMAA2.fx");
+IfFileExistsDelete(Ansel + "XHQAA.fx");
+IfFileExistsDelete(Ansel + "MC_SSAO.fx");
+IfFileExistsDelete(Ansel + "MC_Tonemap.fx");
+IfFileExistsDelete(Ansel + "MC_TonemapHDR.fx");
+IfFileExistsDelete(Ansel + "NGLighting_specular.fx");
+IfFileExistsDelete(Ansel + "NGLighting-Configs_specular.fxh");
+IfFileExistsDelete(Ansel + "NGLighting-Shader_specular.fxh");
+IfFileExistsDelete(Ansel + "NGLightingUI_specular.fxh");
+IfFileExistsDelete(Ansel + "Volumetric Fog V2.0.fx");
+IfFileExistsDelete(Ansel + "Reinhard.fx");
+IfFileExistsDelete(Ansel + "5XBR_NoBlend.fx");
+IfFileExistsDelete(Ansel + "ShaderFastMathLib.h");
+IfFileExistsDelete(Ansel + "YASSGI_bleu.png");
+IfFileExistsDelete(Ansel + "YASSGI_old_tracer.fx");
+IfFileExistsDelete(Ansel + "ZN_GI.fx");
+IfFileExistsDelete(Ansel + "ZNbluenoise512.png");
+IfFileExistsDelete(Ansel + "GloomAO.fx");
+IfFileExistsDelete(Ansel + "Droste.fx");
+IfFileExistsDelete(Ansel + "LongExposure.fx");
+IfFileExistsDelete(Ansel + "RealLongExposure.fx");
+IfFileExistsDelete(Ansel + "FGFXFastCascadedSeparableBlur16X.fx");
+IfFileExistsDelete(Ansel + "PerfectPerspective.fx");
+IfFileExistsDelete(Ansel + "Particles.fx");
+IfFileExistsDelete(Ansel + "AtmosphericDensity.fx");
+IfFileExistsDelete(Ansel + "MShaders.zip");
+IfDirectoryExistsDelete(Ansel + "MShaders");
+IfDirectoryExistsDelete(Ansel + "Include");
+IfFileExistsDelete(Ansel + "PD80_03_Shadows_Midtones_Highlights.fx");
+IfFileExistsDelete(Ansel + "PD80_04_Color_Balance.fx");
+IfFileExistsDelete(Ansel + "PD80_04_Color_Gradients.fx");
+IfFileExistsDelete(Ansel + "PD80_04_Selective_Color.fx");
+IfFileExistsDelete(Ansel + "PD80_04_Selective_Color_v2.fx");
 
 
 
 
 // Download shaders
-using (var client = new HttpClient())
-{
-    using (var s = client.GetStreamAsync("https://github.com/person12306464/msfb_shaders/archive/8309018d0609f836a1ad720f758685c9b95e52f1.zip"))
-    {
-        using (var fs = new FileStream(Ansel + "shaders.zip", FileMode.OpenOrCreate))
-        {
-            s.Result.CopyTo(fs);
-        }
-    }
-}
+
+Download("https://github.com/person12306464/msfb_shaders/archive/fc9168ef110b16a8f187a5bf94d2229fda243ad9.zip", Ansel + "shaders.zip");
+
 
 Console.WriteLine("Installing shaders...");
 
 
 // Extract
-System.IO.Compression.ZipFile.ExtractToDirectory(Ansel + "shaders.zip", Ansel + "shaders");
+Extract(Ansel + "shaders.zip", Ansel + "shaders");
 File.Delete(Ansel + "shaders.zip");
 
 
@@ -583,41 +399,24 @@ File.Move(shaderDir + "CobraFX\\LongExposure.fx", Ansel + "LongExposure.fx");
 File.Move(shaderDir + "CobraFX\\RealLongExposure.fx", Ansel + "RealLongExposure.fx");
 File.Move(shaderDir + "FGFX\\FGFXFastCascadedSeparableBlur16X.fx", Ansel + "FGFXFastCascadedSeparableBlur16X.fx");
 File.Move(shaderDir + "Fubax\\PerfectPerspective.fx", Ansel + "PerfectPerspective.fx");
+File.Move(shaderDir + "prod80\\PD80_03_Shadows_Midtones_Highlights.fx", Ansel + "PD80_03_Shadows_Midtones_Highlights.fx");
+File.Move(shaderDir + "prod80\\PD80_04_Color_Balance.fx", Ansel + "PD80_04_Color_Balance.fx");
+File.Move(shaderDir + "prod80\\PD80_04_Color_Gradients.fx", Ansel + "PD80_04_Color_Gradients.fx");
+File.Move(shaderDir + "prod80\\PD80_04_Selective_Color.fx", Ansel + "PD80_04_Selective_Color.fx");
+File.Move(shaderDir + "prod80\\PD80_04_Selective_Color_v2.fx", Ansel + "PD80_04_Selective_Color_v2.fx");
+
 
 Directory.Delete(Ansel + "shaders", true);
 
 // That took a while to do...
 
 
-static void lineChanger(string newText, string fileName, int line_to_edit)
-{
-    string[] arrLine = File.ReadAllLines(fileName);
-    arrLine[line_to_edit - 1] = newText;
-    File.WriteAllLines(fileName, arrLine);
-}
-
-static void lineAdder(string fileName, int line)
-{
-    var allLines = File.ReadAllLines(fileName).ToList();
-    allLines.Insert(line, "");
-    File.WriteAllLines(fileName, allLines.ToArray());
-}
-
-
 
 // Now for GloomAO..
 
 Console.WriteLine("Downloading GloomAO...");
-using (var client = new HttpClient())
-{
-    using (var s = client.GetStreamAsync("https://raw.githubusercontent.com/BlueSkyDefender/AstrayFX/910e3213a846b34dd65d94e84b61b61fca69dd6d/Shaders/GloomAO.fx"))
-    {
-        using (var fs = new FileStream(Ansel + "GloomAO.fx", FileMode.OpenOrCreate))
-        {
-            s.Result.CopyTo(fs);
-        }
-    }
-}
+
+Download("https://raw.githubusercontent.com/BlueSkyDefender/AstrayFX/910e3213a846b34dd65d94e84b61b61fca69dd6d/Shaders/GloomAO.fx", Ansel + "GloomAO.fx");
 
 
 // Start modifying GloomAO
@@ -625,73 +424,58 @@ using (var client = new HttpClient())
 Console.WriteLine("Patching GloomAO...");
 
 
-lineChanger("", Ansel + "GloomAO.fx", 467);
+ChangeLine("", Ansel + "GloomAO.fx", 467);
 
-lineChanger("		zBuffer = rcp(Z.y * C.y + C.x);", Ansel + "GloomAO.fx", 708);
-lineChanger("		zBufferWH = Far * NearWH / (Far + zB.y * (NearWH - Far));", Ansel + "GloomAO.fx", 709);
+ChangeLine("		zBuffer = rcp(Z.y * C.y + C.x);", Ansel + "GloomAO.fx", 708);
+ChangeLine("		zBufferWH = Far * NearWH / (Far + zB.y * (NearWH - Far));", Ansel + "GloomAO.fx", 709);
 
-lineChanger("		zBuffer = rcp(Z.x * C.y + C.x);", Ansel + "GloomAO.fx", 713);
-lineChanger("		zBufferWH = Far * NearWH / (Far + zB.x * (NearWH - Far));", Ansel + "GloomAO.fx", 714);
+ChangeLine("		zBuffer = rcp(Z.x * C.y + C.x);", Ansel + "GloomAO.fx", 713);
+ChangeLine("		zBufferWH = Far * NearWH / (Far + zB.x * (NearWH - Far));", Ansel + "GloomAO.fx", 714);
 
-lineChanger("", Ansel + "GloomAO.fx", 1009);
-lineChanger("", Ansel + "GloomAO.fx", 1010);
-lineChanger("", Ansel + "GloomAO.fx", 1011);
-lineChanger("", Ansel + "GloomAO.fx", 1012);
-lineChanger("", Ansel + "GloomAO.fx", 1013);
+ChangeLine("", Ansel + "GloomAO.fx", 1009);
+ChangeLine("", Ansel + "GloomAO.fx", 1010);
+ChangeLine("", Ansel + "GloomAO.fx", 1011);
+ChangeLine("", Ansel + "GloomAO.fx", 1012);
+ChangeLine("", Ansel + "GloomAO.fx", 1013);
 
 
 // Particles
 
 Console.WriteLine("Downloading Particles...");
-using (var client = new HttpClient())
-{
-    using (var s = client.GetStreamAsync("https://raw.githubusercontent.com/crosire/reshade-shaders/6b452c4a101ccb228c4986560a51c571473c517b/ShadersAndTextures/Particles.fx"))
-    {
-        using (var fs = new FileStream(Ansel + "Particles.fx", FileMode.OpenOrCreate))
-        {
-            s.Result.CopyTo(fs);
-        }
-    }
-}
+
+Download("https://raw.githubusercontent.com/crosire/reshade-shaders/6b452c4a101ccb228c4986560a51c571473c517b/ShadersAndTextures/Particles.fx", Ansel + "Particles.fx");
 
 
 Console.WriteLine("Patching Particles...");
 
-lineAdder(Ansel + "Particles.fx", 180);
-lineAdder(Ansel + "Particles.fx", 180);
-lineAdder(Ansel + "Particles.fx", 180);
-lineAdder(Ansel + "Particles.fx", 180);
-lineAdder(Ansel + "Particles.fx", 180);
-lineAdder(Ansel + "Particles.fx", 180);
+AddLine(Ansel + "Particles.fx", 180);
+AddLine(Ansel + "Particles.fx", 180);
+AddLine(Ansel + "Particles.fx", 180);
+AddLine(Ansel + "Particles.fx", 180);
+AddLine(Ansel + "Particles.fx", 180);
+AddLine(Ansel + "Particles.fx", 180);
 
 
-lineChanger("float getBUFFER_HEIGHT()", Ansel + "Particles.fx", 182);
-lineChanger("{", Ansel + "Particles.fx", 183);
-lineChanger("	return BUFFER_HEIGHT;", Ansel + "Particles.fx", 184);
-lineChanger("}", Ansel + "Particles.fx", 185);
+ChangeLine("float getBUFFER_HEIGHT()", Ansel + "Particles.fx", 182);
+ChangeLine("{", Ansel + "Particles.fx", 183);
+ChangeLine("	return BUFFER_HEIGHT;", Ansel + "Particles.fx", 184);
+ChangeLine("}", Ansel + "Particles.fx", 185);
 
-lineChanger("	#if (getBUFFER_HEIGHT() <= 720)", Ansel + "Particles.fx", 189);
-lineChanger("	#elif (getBUFFER_HEIGHT() <= 1080)", Ansel + "Particles.fx", 191);
-lineChanger("	#elif (getBUFFER_HEIGHT() <= 1440)", Ansel + "Particles.fx", 193);
-lineChanger("	#elif (getBUFFER_HEIGHT() <= 2160)", Ansel + "Particles.fx", 195);
+ChangeLine("	#if (getBUFFER_HEIGHT() <= 720)", Ansel + "Particles.fx", 189);
+ChangeLine("	#elif (getBUFFER_HEIGHT() <= 1080)", Ansel + "Particles.fx", 191);
+ChangeLine("	#elif (getBUFFER_HEIGHT() <= 1440)", Ansel + "Particles.fx", 193);
+ChangeLine("	#elif (getBUFFER_HEIGHT() <= 2160)", Ansel + "Particles.fx", 195);
 
 
 
 // Atmospheric Density
 
 Console.WriteLine("Downloading AtmosphericDensity...");
-using (var client = new HttpClient())
-{
-    using (var s = client.GetStreamAsync("https://github.com/TreyM/MShaders-1/archive/d38b1af92d047b96819c898400919798e265c1cd.zip"))
-    {
-        using (var fs = new FileStream(Ansel + "MShaders.zip", FileMode.OpenOrCreate))
-        {
-            s.Result.CopyTo(fs);
-        }
-    }
-}
 
-System.IO.Compression.ZipFile.ExtractToDirectory(Ansel + "MShaders.zip", Ansel + "MShaders");
+Download("https://github.com/TreyM/MShaders-1/archive/d38b1af92d047b96819c898400919798e265c1cd.zip", Ansel + "MShaders.zip");
+
+
+Extract(Ansel + "MShaders.zip", Ansel + "MShaders");
 File.Delete(Ansel + "MShaders.zip");
 File.Move(Ansel + "MShaders\\MShaders-1-d38b1af92d047b96819c898400919798e265c1cd\\Shaders\\MShaders\\AtmosphericDensity.fx", Ansel + "AtmosphericDensity.fx");
 Directory.Move(Ansel + "MShaders\\MShaders-1-d38b1af92d047b96819c898400919798e265c1cd\\Shaders\\MShaders\\Include", Ansel + "Include");
@@ -702,33 +486,25 @@ Directory.Delete(Ansel + "MShaders", true);
 Console.WriteLine("Patching AtmosphericDensity...");
 
 
-lineChanger("    #define ENABLE_MISC_CONTROLS 1", Ansel + "AtmosphericDensity.fx", 53);
-lineChanger("    float  depth, sky;", Ansel + "AtmosphericDensity.fx", 486);
-lineChanger("", Ansel + "AtmosphericDensity.fx", 493);
-lineChanger("", Ansel + "AtmosphericDensity.fx", 526);
-lineChanger("", Ansel + "AtmosphericDensity.fx", 527);
-lineChanger("", Ansel + "AtmosphericDensity.fx", 528);
-lineChanger("", Ansel + "AtmosphericDensity.fx", 546);
+ChangeLine("    #define ENABLE_MISC_CONTROLS 1", Ansel + "AtmosphericDensity.fx", 53);
+ChangeLine("    float  depth, sky;", Ansel + "AtmosphericDensity.fx", 486);
+ChangeLine("", Ansel + "AtmosphericDensity.fx", 493);
+ChangeLine("", Ansel + "AtmosphericDensity.fx", 526);
+ChangeLine("", Ansel + "AtmosphericDensity.fx", 527);
+ChangeLine("", Ansel + "AtmosphericDensity.fx", 528);
+ChangeLine("", Ansel + "AtmosphericDensity.fx", 546);
 
-lineChanger("UI_COMBO (AUTO_COLOR, \"Fog Color Mode\", \"\", 0, 1,", Ansel + "AtmosphericDensity.fx", 66);
+ChangeLine("UI_COMBO (AUTO_COLOR, \"Fog Color Mode\", \"\", 0, 1,", Ansel + "AtmosphericDensity.fx", 66);
 
 
 
 // MXAO IL
 
 Console.WriteLine("Downloading qUINT_mxao_il...");
-using (var client = new HttpClient())
-{
-    using (var s = client.GetStreamAsync("https://raw.githubusercontent.com/martymcmodding/qUINT/98fed77b26669202027f575a6d8f590426c21ebd/Shaders/qUINT_mxao.fx"))
-    {
-        using (var fs = new FileStream(Ansel + "qUINT_mxao_il.fx", FileMode.OpenOrCreate))
-        {
-            s.Result.CopyTo(fs);
-        }
-    }
-}
 
-lineChanger(" #define MXAO_ENABLE_IL			1	//[0 or 1]	    Enables Indirect Lighting calculation. Will cause a major fps hit.", Ansel + "qUINT_mxao_il.fx", 31);
+Download("https://raw.githubusercontent.com/martymcmodding/qUINT/98fed77b26669202027f575a6d8f590426c21ebd/Shaders/qUINT_mxao.fx", Ansel + "qUINT_mxao_il.fx");
+
+ChangeLine(" #define MXAO_ENABLE_IL			1	//[0 or 1]	    Enables Indirect Lighting calculation. Will cause a major fps hit.", Ansel + "qUINT_mxao_il.fx", 31);
 
 
 
@@ -792,6 +568,11 @@ Console.WriteLine("Successfully installed the following shaders:\n\n" +
                   "PerfectPerspective.fx (By Fubaxiusz, License: http://creativecommons.org/licenses/by-sa/3.0/, patched by Person123) (Has been modified)\n" +
                   "Particles.fx (By BlueSkyDefender, License: https://creativecommons.org/licenses/by-nd/4.0/, patched by Person123)\n" +
                   "qUINT_mxao_il.fx (By Marty McFly, MXAO with IL enabled.)\n" +
+                  "PD80_03_Shadows_Midtones_Highlights.fx (By prod80, modifed by Person123, UI options are changed to work better in Ansel)\n" +
+                  "PD80_04_Color_Balance.fx (By prod80, modifed by Person123, UI options are changed to work better in Ansel)\n" +
+                  "PD80_04_Color_Gradients.fx (By prod80, modifed by Person123, UI options are changed to work better in Ansel)\n" +
+                  "PD80_04_Selective_Color.fx (By prod80, modifed by Person123, UI options are changed to work better in Ansel)\n" +
+                  "PD80_04_Selective_Color_v2.fx (By prod80, modifed by Person123, UI options are changed to work better in Ansel)\n" +
                   "\n" +
                   "Highlights:\n\n" +
                   "NGLighting_specular.fx (By NiceGuy, patched by Extravi, modified by Person123)\n" +
