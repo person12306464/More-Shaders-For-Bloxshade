@@ -64,6 +64,12 @@ FGFXFastCascadedSeparableBlur16X.fx (By Alex Tuduran, patched by Person123)
 PerfectPerspective.fx (By Fubaxiusz, License: http://creativecommons.org/licenses/by-sa/3.0/, patched by Person123) (Has been modified)
 Particles.fx (By BlueSkyDefender, License: https://creativecommons.org/licenses/by-nd/4.0/, patched by Person123)
 qUINT_mxao_il.fx (By Marty McFly, MXAO with IL enabled.)
+PD80_03_Shadows_Midtones_Highlights.fx (By prod80, modifed by Person123, UI options are changed to work better in Ansel)
+PD80_04_Color_Balance.fx (By prod80, modifed by Person123, UI options are changed to work better in Ansel)
+PD80_04_Color_Gradients.fx (By prod80, modifed by Person123, UI options are changed to work better in Ansel)
+PD80_04_Selective_Color.fx (By prod80, modifed by Person123, UI options are changed to work better in Ansel)
+PD80_04_Selective_Color_v2.fx (By prod80, modifed by Person123, UI options are changed to work better in Ansel)
+
 
 Highlights:
 
